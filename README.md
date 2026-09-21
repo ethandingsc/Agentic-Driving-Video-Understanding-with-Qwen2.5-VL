@@ -1,40 +1,68 @@
-# Qwen2.5-VL for Driving Video Temporal Understanding
+# Agentic Driving Video Understanding with Qwen2.5-VL
 
-
-> Parameter-efficient fine-tuning and frame-sampling analysis of Qwen2.5-VL-7B for multi-frame driving scene understanding and safety-critical reasoning.
+> Fine-tuning, temporal sampling, and agentic video analysis with Qwen2.5-VL for safety-critical driving understanding.
 
 ---
+
 <p align="center">
-  <img src="assets/Image13_02_33.png" alt="Qwen2.5-VL Driving Video Temporal Understanding Architecture" width="100%">
+  <img src="assets/Image13_02_33.png" alt="Agentic Driving Video Understanding with Qwen2.5-VL" width="100%">
 </p>
 
 ## 🎯 Overview
 
-This project adapts **Qwen2.5-VL-7B-Instruct** to safety-critical driving scenarios through **LoRA fine-tuning**, and investigates how different **video frame sampling strategies** affect multimodal reasoning performance.
+This project develops **Qwen2.5-VL-7B** from a general-purpose vision-language model into an **agentic driving-video analysis system** for offline safety analysis.
 
-The system supports multi-frame visual question answering over offline driving footage, with a focus on:
+The project progresses through three stages:
 
-- Dynamic scene understanding
+```text
+Experiment 1: Domain Adaptation
+Qwen2.5-VL
+→ LoRA Fine-Tuning
+→ Driving Video Understanding
+
+Experiment 2: Temporal Sampling
+Driving Video
+→ Uniform / Dense / Event-aware Sampling
+→ Sampling Ablation
+
+Experiment 3: Agentic Analysis
+Driving Video
+→ Coarse Sampling
+→ Qwen2.5-VL Planner
+→ Important Temporal Segments
+→ Local Re-sampling
+→ Detailed Analysis
+→ RAG
+→ Final Safety Report
+```
+
+The system focuses on:
+
+- Dynamic driving-scene understanding
 - Vulnerable road user (VRU) behavior
-- Accident and near-accident analysis
+- Accident and near-miss analysis
 - Temporal event relationships
 - Safety-critical reasoning
+- Autonomous temporal segment selection
+- Retrieval-grounded safety analysis
 
-**Target use case:** offline analysis of recorded driving data, such as fleet dashcam logs, accident replay, and hard-case mining.
+**Target use case:** offline analysis of recorded driving data, including fleet dashcam logs, accident replay, near-miss investigation, and hard-case mining.
 
-> This project is designed for offline video understanding and is **not intended for real-time vehicle control**.
+> This project is designed for offline driving-video analysis and is **not intended for real-time vehicle control**.
 
 ### Research Questions
 
-1. Can domain-specific LoRA fine-tuning improve a general-purpose VLM on safety-critical driving QA?
+1. Can domain-specific **LoRA fine-tuning** improve a general-purpose VLM on safety-critical driving QA?
 2. How much does **frame selection** matter under a limited visual-token budget?
-3. Is concentrating frames around high-motion events actually better than preserving global temporal context?
+3. Is concentrating frames around high-motion events better than preserving global temporal context?
+4. Can a VLM act as a **temporal planner** to identify safety-critical segments before detailed analysis?
+5. Can **coarse-to-fine temporal analysis + RAG** produce more structured and knowledge-grounded driving safety reports?
 
 ---
 
-## 📊 Key Results
+# 📊 Key Results
 
-### Experiment 1 — Domain LoRA Fine-Tuning
+## Experiment 1 — Domain LoRA Fine-Tuning
 
 Evaluation on the **Automingo** driving QA validation set:
 
@@ -46,9 +74,11 @@ Evaluation on the **Automingo** driving QA validation set:
 
 Domain-specific LoRA fine-tuning improves both answer accuracy and agreement with the reasoning-quality evaluator, with a particularly large gain on **Lingo-Judge (+12.03 pp)**.
 
-### Experiment 2 — Frame Sampling Ablation
+---
 
-To study the trade-off between temporal coverage and visual input cost, three sampling strategies were evaluated on **1,200 QA pairs from 200 VRU-Accident videos**.
+## Experiment 2 — Frame Sampling Ablation
+
+Three temporal sampling strategies were evaluated on **1,200 QA pairs from 200 VRU-Accident videos**.
 
 | Frames | Uniform | Dense | Event-aware |
 |:---:|:---:|:---:|:---:|
@@ -58,12 +88,12 @@ To study the trade-off between temporal coverage and visual input cost, three sa
 
 ### Main Observations
 
-- Increasing the frame budget generally improves performance, but also substantially increases visual input cost.
+- Increasing the frame budget generally improves performance, but also increases visual input cost.
 - **Event-aware sampling performs best under constrained 4–8 frame budgets.**
-- At 16 frames, simple **uniform sampling reaches the highest accuracy (62.17%)**.
-- Surprisingly, **dense high-motion sampling consistently underperforms uniform sampling**.
+- At 16 frames, **uniform sampling reaches the highest accuracy (62.17%)**.
+- **Dense high-motion sampling consistently underperforms uniform sampling.**
 
-This last result became one of the most interesting findings of the project.
+These results suggest that preserving temporal coverage can be more important than simply concentrating frames around regions with large visual changes.
 
 ---
 
@@ -75,77 +105,368 @@ A natural assumption for accident-video understanding is:
 
 The experiments suggest otherwise.
 
-Dense sampling intentionally allocates more frames to high-motion regions. However, its accuracy remains below uniform sampling across all tested frame budgets:
-
 | Frames | Uniform | Dense | Difference |
 |:---:|:---:|:---:|:---:|
 | 4 | 59.00% | 58.67% | -0.33 pp |
 | 8 | 60.08% | 59.17% | -0.91 pp |
 | 16 | 62.17% | 59.58% | **-2.59 pp** |
 
-### Why might this happen?
-
 High inter-frame pixel change does not necessarily correspond to the most useful semantic information.
 
-Around an accident, high-motion regions may contain:
+High-motion regions may contain:
 
 - Motion blur
 - Camera shake
 - Abrupt ego-vehicle movement
 - Visually redundant collision frames
 
-Meanwhile, concentrating too many samples around the collision can reduce coverage of the **pre-event context** needed to answer questions such as:
+At the same time, concentrating too many samples around the collision can remove useful **pre-event and post-event context**.
+
+For example:
 
 - Where did the pedestrian come from?
 - Was the vehicle already approaching the pedestrian?
 - What happened immediately before the collision?
-- How did the relative positions of the road users change?
+- How did the relative positions of road users change?
 
-The results therefore suggest that for driving-video reasoning:
+The results suggest:
 
 > **Temporal coverage can be more valuable than simply concentrating visual tokens around the highest-motion moment.**
 
-This also explains why event-aware sampling is most useful when the frame budget is small: it attempts to preserve global context while selectively allocating limited frames to potentially informative events.
+This finding also motivated **Experiment 3**: instead of relying only on fixed sampling heuristics, use Qwen2.5-VL itself to identify potentially important temporal segments and then re-sample those regions for detailed analysis.
 
 ---
 
-## 🏗️ Pipeline
+# 🤖 Experiment 3 — Agentic Driving Video Analysis
+
+Experiment 3 extends the fine-tuned VLM into an **agentic coarse-to-fine video analysis system**.
+
+Instead of applying one fixed sampling strategy to the entire video, the system first obtains a lightweight global view and then lets **Qwen2.5-VL act as a temporal planner**.
 
 ```text
-Automingo Dataset (Parquet)
-        │
-        │ binary images → decode → PNG
-        ▼
-5-Frame Temporal Samples
-        │
-        │ multi-image conversation format
-        ▼
-Qwen Multimodal SFT Dataset
-        │
-        ▼
-Qwen2.5-VL-7B-Instruct
-        +
-       LoRA
-        │
-        │ Vision Encoder Frozen
-        │ Attention + FFN LoRA
-        ▼
-Domain-Adapted Driving VLM
-        │
-        ├── Automingo Evaluation
-        │     ├── MCQ Accuracy
-        │     └── Lingo-Judge
-        │
-        └── VRU-Accident Evaluation
-              └── Frame Sampling Ablation
-                    ├── Uniform
-                    ├── Dense
-                    └── Event-aware
+Driving Video
+      ↓
+Coarse Temporal Sampling
+      ↓
+Qwen2.5-VL Planner
+      ↓
+Important Temporal Segments
+      ↓
+Local Re-sampling
+      ↓
+Qwen2.5-VL Detailed Analysis
+      ↓
+Safety Topics
+      ↓
+RAG Retrieval
+      ↓
+Final Safety Report
+```
+
+## Agent Workflow
+
+The workflow is orchestrated with **LangGraph**:
+
+```text
+START
+  ↓
+inspect_video
+  ↓
+plan_segments
+  ↓
+analyze_segments
+  ↓
+retrieve_guidance
+  ↓
+write_report
+  ↓
+END
+```
+
+### 1. `inspect_video`
+
+The system reads the complete video and performs **coarse temporal sampling**.
+
+Instead of sending every video frame to the VLM:
+
+```text
+Full Video
+→ Sparse Representative Frames
+→ Timestamped Coarse Observation
+```
+
+This provides global temporal coverage with a much smaller visual input.
+
+### 2. `plan_segments`
+
+The coarse frames, timestamps, and a structured planning prompt are sent to **Qwen2.5-VL**.
+
+The VLM acts as the planner and produces structured decisions such as:
+
+```json
+{
+  "start_sec": 0.0,
+  "end_sec": 3.0,
+  "priority": "high",
+  "reason": "Pedestrian crossing in front of the ego vehicle.",
+  "topics": ["pedestrian", "intersection"]
+}
+```
+
+There is no separate ML classifier for temporal segment selection.
+
+The planning decision is produced through:
+
+```text
+Visual Observations
++
+Temporal Information
++
+Planner Prompt
+        ↓
+Qwen2.5-VL Reasoning
+        ↓
+Structured Temporal Plan
+```
+
+### 3. `analyze_segments`
+
+The agent executes the planner's decision by returning to the **original video** and sampling the selected segment more densely.
+
+```text
+Planner:
+"Analyze 0.0s–3.0s"
+        ↓
+Video Tool
+        ↓
+Local Re-sampling
+        ↓
+Qwen2.5-VL Analyzer
+```
+
+This creates a **coarse-to-fine temporal analysis** strategy:
+
+> Coarse sampling finds **where something important may happen**, while local re-sampling determines **what actually happened**.
+
+### 4. `retrieve_guidance`
+
+The detailed visual analysis produces safety-related topics such as:
+
+```text
+pedestrian
+intersection
+crossing
+```
+
+These topics are used to retrieve relevant driving-safety knowledge.
+
+### 5. `write_report`
+
+Finally, the system combines:
+
+```text
+Video Evidence
++
+Planner Results
++
+Detailed Visual Analysis
++
+Retrieved Safety Knowledge
+        ↓
+Final Safety Report
 ```
 
 ---
 
-## 🧪 Fine-Tuning Configuration
+## 🧠 Agent State
+
+LangGraph maintains a shared state across the workflow.
+
+Conceptually:
+
+```text
+video_path
+    ↓
+metadata + coarse_frames
+    ↓
+plan
+    ↓
+segment_results
+    ↓
+retrieved_docs
+    ↓
+report
+```
+
+Important state fields include:
+
+| State | Purpose |
+|:---|:---|
+| `video_path` | Original driving video |
+| `metadata` | FPS, duration, and video information |
+| `coarse_frames` | Sparse global observations |
+| `plan` | Temporal segments selected by the planner |
+| `segment_results` | Detailed local analysis |
+| `retrieved_docs` | RAG safety knowledge |
+| `report` | Final safety report |
+
+Each LangGraph node reads the current state, performs one task, and writes its result back for downstream nodes.
+
+---
+
+# 📚 RAG Safety Knowledge
+
+The first RAG implementation intentionally uses a lightweight local knowledge base:
+
+```text
+knowledge_base.json
+        ↓
+rag.py
+        ↓
+Lexical Retrieval
+        ↓
+Top-K Safety Knowledge
+```
+
+The knowledge base covers scenarios including:
+
+```text
+Cut-In
+Leading Vehicle Braking
+Vulnerable Road User
+Traffic Signal
+Merging
+Crossing Object
+Intersection
+Construction Zone
+```
+
+Retrieval gives additional weight to important fields:
+
+```text
+tags    × 3
+title   × 2
+content × 1
+```
+
+A lightweight lexical retriever was chosen because the initial knowledge base is small and the goal of Experiment 3 is to first validate the complete **Agent + Tool + VLM + RAG** workflow.
+
+A larger version can later be extended to:
+
+```text
+Driving Documents
+→ Chunking
+→ Embeddings
+→ Vector Database
+→ Semantic Retrieval
+→ Agent
+```
+
+---
+
+# 🧪 Agent Test Case
+
+A real **4.5-second pedestrian-crossing video** was used to validate the complete workflow.
+
+The planner automatically selected:
+
+```text
+0.0s – 3.0s
+
+Priority:
+High
+
+Reason:
+Pedestrian crossing in front of the ego vehicle.
+```
+
+The selected segment was re-sampled and analyzed by Qwen2.5-VL.
+
+The detailed analysis identified:
+
+```text
+Observation:
+A pedestrian is crossing the street ahead of the ego vehicle.
+
+Safety Topics:
+pedestrian
+intersection
+```
+
+RAG retrieved relevant safety knowledge including:
+
+```text
+Intersection Safety
+Vulnerable Road User Interaction
+Crossing Object or Road User
+```
+
+The complete pipeline successfully generated a final driving-safety report.
+
+---
+
+# 🏗️ Full Project Pipeline
+
+```text
+                    Automingo Dataset
+                           │
+                           ▼
+                 5-Frame Temporal Samples
+                           │
+                           ▼
+                 Qwen2.5-VL-7B-Instruct
+                           +
+                          LoRA
+                           │
+                           ▼
+                 Domain-Adapted Driving VLM
+                           │
+             ┌─────────────┴─────────────┐
+             │                           │
+             ▼                           ▼
+     Experiment 1                 Experiment 2
+   LoRA Evaluation              Sampling Ablation
+             │                           │
+             │                  ┌────────┼────────┐
+             │                  ▼        ▼        ▼
+             │               Uniform   Dense   Event-aware
+             │                           │
+             └─────────────┬─────────────┘
+                           │
+                           ▼
+                    Experiment 3
+                           │
+                           ▼
+                    Driving Video
+                           │
+                           ▼
+                    Coarse Sampling
+                           │
+                           ▼
+                   Qwen VLM Planner
+                           │
+                           ▼
+                 Important Time Segment
+                           │
+                           ▼
+                  Local Re-sampling
+                           │
+                           ▼
+                    Qwen Analyzer
+                           │
+                           ▼
+                      Safety Topics
+                           │
+                           ▼
+                          RAG
+                           │
+                           ▼
+                 Final Safety Report
+```
+
+---
+
+# 🧪 Fine-Tuning Configuration
 
 | Configuration | Value |
 |:---|:---|
@@ -164,11 +485,11 @@ Domain-Adapted Driving VLM
 | **Training Time** | ~1h 18min |
 | **Training Steps** | 814 |
 
-The training configuration was designed to make domain adaptation feasible on a **single consumer 24GB GPU** while preserving the pretrained visual representation.
+The configuration makes domain adaptation feasible on a **single 24GB GPU** while preserving the pretrained visual representation.
 
 ---
 
-## 📂 Datasets
+# 📂 Datasets
 
 | Dataset | Purpose | Samples | Frames | Description |
 |:---|:---|:---:|:---:|:---|
@@ -180,43 +501,51 @@ The VRU-Accident evaluation subset contains videos from multiple sources, includ
 
 ---
 
-## 🚀 Deployment
+# 🚀 Deployment
 
-The fine-tuned model is deployed as a complete video-to-answer inference pipeline:
+The fine-tuned model is served remotely using **SGLang**, while the Agent runs locally.
 
 ```text
-Video Upload
-    ↓
-OpenCV Decode
-    ↓
-Frame Sampling
-    ↓
-Qwen2.5-VL Input Construction
-    ↓
-SGLang OpenAI-Compatible API
-    ↓
-Answer + Reasoning
-    ↓
-Gradio UI
+Local Windows
+├── LangGraph Agent
+├── Video Processing
+├── RAG
+└── Prompt / Application Logic
+          │
+          │ OpenAI-compatible HTTP API
+          │ via SSH Tunnel
+          ▼
+AutoDL
+├── SGLang
+├── Fine-tuned Qwen2.5-VL
+└── RTX 4090
 ```
 
-### Deployment Stack
+Request flow:
 
-- **Inference backend:** SGLang
-- **API:** OpenAI-compatible HTTP endpoint
-- **Frontend:** Gradio
-- **Frame strategies:** Uniform / Dense / Event-aware
-- **Frame budgets:** 4 / 8 / 16
-- **Output:** Answer + reasoning + selected-frame visualization
-- **GPU:** Single RTX 4090 24GB
+```text
+Local Agent
+    ↓
+model_client.py
+    ↓
+127.0.0.1:30000
+    ↓
+SSH Tunnel
+    ↓
+AutoDL:30000
+    ↓
+SGLang
+    ↓
+Qwen2.5-VL
+```
 
-The frontend is kept stateless and communicates with the SGLang inference server through HTTP, separating model serving from application logic.
+This separates **agent/application logic** from **GPU model serving**.
 
 ---
 
-### Gradio Demo
+## Gradio Demo
 
-The Gradio interface provides an end-to-end workflow from video upload and frame sampling to multimodal reasoning.
+The original Experiment 2 Gradio interface provides an end-to-end workflow from video upload and frame sampling to multimodal reasoning.
 
 <p align="center">
   <img src="assets/2026-09-06%20090453.png" width="90%">
@@ -232,57 +561,125 @@ The Gradio interface provides an end-to-end workflow from video upload and frame
 
 ---
 
-## 🛠️ Tech Stack
+# ⚠️ Current Limitations
 
-`Python 3.11` · `PyTorch 2.6` · `Transformers 4.57.6` · `Qwen2.5-VL` · `PEFT 0.20.0` · `LoRA` · `FlashAttention2` · `DeepSpeed 0.17.1` · `SGLang 0.5.18` · `Gradio` · `OpenCV`
+The current Agent uses sparse global observations during the planning stage.
+
+Very short events may therefore occur between sampled frames and remain invisible to the planner.
+
+In addition, the model was fine-tuned primarily with **5-frame temporal samples**, while the planner operates over more sparsely distributed observations.
+
+Potential improvements include:
+
+- Overlapping temporal windows for planning
+- Short multi-frame clips instead of isolated coarse frames
+- Adaptive sampling based on planner uncertainty
+- Larger driving-safety knowledge bases
+- Embedding-based semantic retrieval
+- More comprehensive Agent evaluation across accident categories
 
 ---
 
-## 📁 Repository Structure
+# 🛠️ Tech Stack
+
+`Python 3.11` · `PyTorch 2.6` · `Transformers 4.57.6` · `Qwen2.5-VL` · `PEFT 0.20.0` · `LoRA` · `FlashAttention2` · `DeepSpeed 0.17.1` · `LangGraph` · `SGLang 0.5.18` · `Gradio` · `OpenCV` · `RAG`
+
+---
+
+# 📁 Repository Structure
 
 ```text
-Qwen2.5-VL-Driving-Video-Understanding/
+Agentic-Driving-Video-Understanding-with-Qwen2.5-VL/
 │
 ├── assets/
-│   # Figures and media used in the README
+│   # README figures and demo media
 │
 ├── deployment/
 │   └── app.py
-│       # Gradio demo with SGLang API backend
+│       # Gradio + SGLang inference demo
 │
 ├── evaluation/
 │   └── evaluate_qwen25.py
-│       # Base / LoRA evaluation on Automingo
+│       # Base vs. LoRA evaluation on Automingo
 │
 ├── experiment2_sampling/
 │   ├── sampling_strategies.py
-│   │   # Uniform / Dense / Event-aware frame sampling
+│   │   # Uniform / Dense / Event-aware sampling
 │   │
 │   ├── evaluate_sampling.py
-│   │   # Frame sampling evaluation on VRU-Accident
+│   │   # Sampling evaluation on VRU-Accident
 │   │
 │   ├── benchmark_latency.py
-│   │   # End-to-end inference latency benchmark
+│   │   # Inference latency benchmark
 │   │
 │   └── results/
-│       ├── uniform_*.json
-│       ├── dense_*.json
-│       ├── event-aware_*.json
-│       └── latency_*.json
-│           # Accuracy and latency experiment results
+│       # Accuracy and latency results
+│
+├── experiment3_agent/
+│   ├── agent.py
+│   │   # LangGraph state, nodes, and workflow
+│   │
+│   ├── model_client.py
+│   │   # OpenAI-compatible SGLang client
+│   │
+│   ├── video_tools.py
+│   │   # Video metadata and temporal frame sampling
+│   │
+│   ├── tools.py
+│   │   # Agent tool wrappers
+│   │
+│   ├── prompts.py
+│   │   # Planner / Analyzer / Report prompts
+│   │
+│   ├── rag.py
+│   │   # Lightweight safety-knowledge retrieval
+│   │
+│   ├── knowledge_base.json
+│   │   # Driving-safety knowledge base
+│   │
+│   └── tests/
+│       # Agent, RAG, and video-tool tests
 │
 ├── training/
 │   ├── automingo_7b_lora.sh
-│   │   # Qwen2.5-VL-7B LoRA training configuration
+│   │   # Qwen2.5-VL LoRA training configuration
 │   │
 │   ├── finetune_sweep.py
-│   │   # Fine-tuning experiment utilities
+│   │   # Fine-tuning utilities
 │   │
 │   ├── results_base_1055_both.json
 │   └── results_lora_v2_1055_both.json
-│       # Base vs. LoRA evaluation results
+│       # Base vs. LoRA results
 │
 └── README.md
 ```
+
 ---
 
+# 💡 Key Takeaway
+
+The project evolves from **model adaptation** to **system-level video reasoning**:
+
+```text
+Fine-Tuning
+→ Better Driving VLM
+
+Temporal Sampling
+→ Better Use of Visual Context
+
+Agentic Planning
+→ Decide Where to Look
+
+Local Re-sampling
+→ Inspect Important Events
+
+RAG
+→ Ground Analysis with Safety Knowledge
+
+Final Report
+→ Complete Offline Driving-Safety Analysis
+```
+
+The central idea is:
+
+> **Instead of analyzing every part of a driving video equally, use the VLM to first decide where to look, then spend more visual computation on the segments that matter.**
