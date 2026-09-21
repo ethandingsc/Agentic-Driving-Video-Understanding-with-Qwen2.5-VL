@@ -1,0 +1,124 @@
+[
+  {
+    "id": "cut_in",
+    "title": "Vehicle cut-in",
+    "content": "A vehicle cut-in occurs when another vehicle suddenly moves into the ego vehicle's lane, often from an adjacent lane. A cut-in can reduce the available following distance and leave the ego vehicle with limited time to respond. The driver should continuously monitor surrounding vehicles, maintain a safe following distance, and be prepared to reduce speed when another vehicle enters the lane. When the gap becomes small or the cut-in is abrupt, early braking or controlled deceleration can help reduce the risk of a rear-end collision.",
+    "tags": [
+      "cut_in",
+      "vehicle",
+      "lane_change",
+      "following_distance",
+      "braking",
+      "rear_end_collision"
+    ],
+    "source": "Driving Safety Knowledge"
+  },
+  {
+    "id": "leading_vehicle_braking",
+    "title": "Leading vehicle braking",
+    "content": "When the vehicle ahead suddenly slows down or brakes, the ego vehicle may face a rapidly decreasing time headway. The driver should monitor the behavior of the leading vehicle and maintain sufficient following distance to preserve a safe stopping margin. Early recognition of brake lights or deceleration allows the driver to react smoothly. If the available distance is insufficient, prompt braking may be necessary to avoid a rear-end collision.",
+    "tags": [
+      "leading_vehicle",
+      "braking",
+      "deceleration",
+      "following_distance",
+      "time_headway",
+      "rear_end_collision"
+    ],
+    "source": "Driving Safety Knowledge"
+  },
+  {
+    "id": "vulnerable_road_user",
+    "title": "Vulnerable road user interaction",
+    "content": "Vulnerable road users include pedestrians, cyclists, and other road users who have limited physical protection in a collision. Their movements can be less predictable than those of vehicles, especially near crossings, intersections, and road edges. Drivers should actively monitor the area around the vehicle, reduce speed when necessary, and be prepared to stop when a vulnerable road user enters or may enter the vehicle's path. Extra caution is appropriate when visibility is limited or when multiple road users are present.",
+    "tags": [
+      "vru",
+      "pedestrian",
+      "cyclist",
+      "crossing",
+      "intersection",
+      "visibility",
+      "braking"
+    ],
+    "source": "NHTSA Pedestrian Safety"
+  },
+  {
+    "id": "traffic_signal",
+    "title": "Traffic signal interaction",
+    "content": "Traffic signals control the movement of vehicles and pedestrians at intersections. Drivers approaching a signalized intersection should continuously monitor the current signal state and the behavior of surrounding road users. When the signal changes or stopping is required, the driver should adjust speed early and stop safely before the applicable stop line or crossing area. Turning vehicles should also check for pedestrians or cyclists who may have a permitted crossing movement.",
+    "tags": [
+      "traffic_signal",
+      "intersection",
+      "red_light",
+      "yellow_light",
+      "pedestrian_signal",
+      "turning",
+      "braking"
+    ],
+    "source": "FHWA Pedestrian Safety Guide"
+  },
+  {
+    "id": "merging_lane",
+    "title": "Merging lane interaction",
+    "content": "Merging occurs when vehicles enter the same roadway or lane from different traffic streams. During a merge, the driver should monitor vehicles in adjacent lanes, identify available gaps, and maintain sufficient spacing from nearby vehicles. Sudden acceleration, braking, or lane changes can create conflicts when the available gap is small. Adjusting speed smoothly and maintaining awareness of surrounding traffic can reduce the likelihood of a collision during merging.",
+    "tags": [
+      "merge",
+      "merging_lane",
+      "vehicle",
+      "lane_change",
+      "spacing",
+      "gap",
+      "acceleration",
+      "braking"
+    ],
+    "source": "Driving Safety Knowledge"
+  },
+  {
+    "id": "crossing_object",
+    "title": "Crossing object or road user",
+    "content": "A crossing-object event occurs when an object, pedestrian, cyclist, or another road user moves across the ego vehicle's intended path. The event can become hazardous when the crossing movement is difficult to anticipate or when the available stopping distance is limited. Drivers should scan the road ahead and surrounding areas for potential crossing hazards, recognize conflicts early, and be prepared to slow down or stop. Reduced visibility, parked vehicles, and other obstacles can make crossing objects harder to detect.",
+    "tags": [
+      "crossing_object",
+      "obstacle",
+      "pedestrian",
+      "cyclist",
+      "conflict",
+      "visibility",
+      "braking",
+      "stopping_distance"
+    ],
+    "source": "Driving Safety Knowledge"
+  },
+  {
+    "id": "intersection",
+    "title": "Intersection safety",
+    "content": "Intersections create potential conflicts because vehicles, pedestrians, and cyclists may approach from multiple directions. Before entering an intersection, drivers should monitor traffic signals, nearby vehicles, pedestrians, cyclists, and possible turning movements. Even when the driver has the right of way, surrounding road users should still be observed because another road user may violate the expected traffic pattern. Approaching at an appropriate speed gives the driver more time to recognize and respond to unexpected conflicts.",
+    "tags": [
+      "intersection",
+      "crossing",
+      "vehicle",
+      "pedestrian",
+      "cyclist",
+      "traffic_signal",
+      "turning",
+      "right_of_way"
+    ],
+    "source": "Driving Safety Knowledge"
+  },
+  {
+    "id": "construction_site",
+    "title": "Construction zone",
+    "content": "Construction zones can introduce temporary traffic patterns, lane shifts, narrowed lanes, barriers, workers, and unexpected obstacles. Drivers should pay close attention to temporary signs, traffic-control devices, lane markings, and changes in roadway geometry. Reducing speed and increasing attention can provide additional time to respond to workers, stopped vehicles, or sudden lane changes. The driver should follow the temporary traffic-control instructions instead of relying only on the normal road layout.",
+    "tags": [
+      "construction",
+      "construction_zone",
+      "obstacle",
+      "lane_change",
+      "speed",
+      "traffic_control",
+      "roadwork",
+      "worker"
+    ],
+    "source": "Driving Safety Knowledge"
+  }
+]
