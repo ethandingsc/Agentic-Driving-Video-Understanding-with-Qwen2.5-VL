@@ -121,15 +121,11 @@ class DrivingVideoAgent:
     ):
         """
         初始化驾驶视频 Agent。
-
         这里主要准备三个东西：
-
         1. Config
            保存 Agent 的参数
-
         2. SGLangClient
            以后负责调用 AutoDL 上的 Qwen2.5-VL
-
         3. SafetyRetriever
            负责从 knowledge_base.json 检索安全知识
         """
@@ -139,9 +135,6 @@ class DrivingVideoAgent:
 
         # 创建 Qwen / SGLang 客户端
         #
-        # 注意：
-        # 现在无卡测试时，可以暂时用 Mock Client。
-        # 真正连接 AutoDL 时才会调用 SGLang。
         self.client = SGLangClient(self.config)
 
         # 默认知识库就在当前目录
@@ -163,18 +156,6 @@ class DrivingVideoAgent:
 
     def _build_graph(self):
 
-        # Agent 的五个主要步骤
-        #
-        # inspect_video
-        #      ↓
-        # plan_segments
-        #      ↓
-        # analyze_segments
-        #      ↓
-        # retrieve_guidance
-        #      ↓
-        # write_report
-        #
         nodes = [
             self.inspect_video,
             self.plan_segments,
